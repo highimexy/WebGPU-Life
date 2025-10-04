@@ -1,0 +1,56 @@
+<!doctype html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>WebGPU Life</title>
+</head>
+
+<body>
+    <canvas width="512" height="512"></canvas>
+    <script type="module">
+        const canvas = document.querySelector("canvas");
+
+        // Sprawdzenie wsparcia WebGPU
+        if (!navigator.gpu) {
+            throw new Error("WebGPU not supported on this browser.");
+        }
+        // Pobieranie adaptera i urządzenia GPU
+        const adapter = await navigator.gpu.requestAdapter();
+        if (!adapter) {
+            throw new Error("No appropriate GPUAdapter found.");
+        }
+        //GLOWNY INTERFEJS
+        const device = await adapter.requestDevice();
+
+        const context = canvas.getContext("webgpu");
+        const canvasFormat = navigator.gpu.getPreferredCanvasFormat();
+
+        context.configure({
+            device: device,
+            format: canvasFormat,
+        });
+
+        // ENCODER KOMEND - Obiekt który zbiera polecenia do GPU
+        const encoder = device.createCommandEncoder();
+
+        // render pass - blok rysowania
+        const pass = encoder.beginRenderPass({
+            colorAttachments: [{
+                view: context.getCurrentTexture().createView(), // aktualna tekstura
+                loadOp: "clear",
+                clearValue: { r: 0, g: 0, b: 0.4, a: 1 }, // New line
+                storeOp: "store",
+                
+            }]
+        });
+
+        pass.end();
+
+        // Skoncz komendy i wyslij je na GPU
+        const commandBuffer = encoder.finish();
+        device.queue.submit([commandBuffer]);
+    </script>
+</body>
+
+</html>
